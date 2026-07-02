@@ -163,9 +163,20 @@ export const determineAxes = (
   // Classify columns by data type
   const numericCols = columns.filter(
     (col) =>
-      data.some((row) => typeof row[col] === "number") &&
+      data.some(
+        (row) =>
+          row[col] !== null &&
+          row[col] !== undefined &&
+          row[col] !== "" &&
+          !isNaN(Number(row[col])) &&
+          typeof row[col] !== "boolean"
+      ) &&
       data.every(
-        (row) => row[col] === undefined || typeof row[col] === "number"
+        (row) =>
+          row[col] === null ||
+          row[col] === undefined ||
+          row[col] === "" ||
+          (!isNaN(Number(row[col])) && typeof row[col] !== "boolean")
       )
   );
 
@@ -236,7 +247,14 @@ export const transformChartData = (
     const numericKeys = new Set<string>();
     data.forEach((row) => {
       Object.keys(row).forEach((key) => {
-        if (key !== xAxis && typeof row[key] === "number") {
+        if (
+          key !== xAxis &&
+          row[key] !== null &&
+          row[key] !== undefined &&
+          row[key] !== "" &&
+          !isNaN(Number(row[key])) &&
+          typeof row[key] !== "boolean"
+        ) {
           if (!selectedYAxis || selectedYAxis.includes(key)) {
             numericKeys.add(key);
           }
@@ -589,12 +607,11 @@ export default function ResultPage({
   );
 
   useEffect(() => {
-    setConnectionId(connection_id ?? id ?? null);
+    setConnectionId(connectionId ?? null);
     setDatasetId(dataset_id ?? null);
     setApiId(apiId ?? null);
     setCsvId(csvId ?? null);
-    setTableName(tableName ?? null);
-  }, [connection_id, dataset_id, apiId, csvId, tableName]);
+  }, [connectionId, dataset_id, apiId, csvId]);
 
   // Fetch database tables for SQL completion when connection_id changes
   useEffect(() => {
@@ -661,7 +678,7 @@ export default function ResultPage({
         // If filter.type exists and is one of the date types, use dateOperationMap,
         // otherwise fall back to the generic operationMap using filter.operation.
         const operationLabel =
-          dateOperationMap[filter.type] ||
+          (filter.type ? dateOperationMap[filter.type] : undefined) ||
           operationMap[filter.operation] ||
           filter.operation;
 
@@ -692,9 +709,9 @@ export default function ResultPage({
   console.log("APIID in result", apiId);
   console.log("connectt", connection_id);
   const apiSource =
-    (sourceType === "api" && apiId) || (type === "dataset" && apiId);
+    !!((sourceType === "api" && apiId) || (type === "dataset" && apiId));
   const csvSource =
-    (sourceType === "csv" && csvId) || (type === "dataset" && csvId);
+    !!((sourceType === "csv" && csvId) || (type === "dataset" && csvId));
 
   // Function to apply the custom theme to the Monaco editor
   const handleEditorDidMount = (
@@ -1024,6 +1041,16 @@ export default function ResultPage({
     rawQuery,
     binColumn,
     binSize,
+  }: {
+    aggregate?: string;
+    column?: string;
+    groupBy?: string | string[];
+    limit?: number;
+    dateView?: string;
+    dateBy?: string;
+    rawQuery?: string;
+    binColumn?: string;
+    binSize?: number;
   } = {}) {
     // Create an abort controller for cleanup
     const abortController = new AbortController();
@@ -1171,9 +1198,16 @@ export default function ResultPage({
           }
 
           if (type === "dataset") {
-            const datasetDetails = await fetchDatasetDetails();
-            if (!signal.aborted && datasetDetails) {
-              updateVisualizationData(datasetDetails);
+            const datasetDetails = await supabaseClient
+              .from("datasets")
+              .select("*")
+              .eq("id", dataset_id)
+              .single();
+            if (!signal.aborted && datasetDetails.data) {
+              // Set properties to fallback to
+              const d = datasetDetails.data;
+              if (d.selectedAggregate) setSelectedAggregate(d.selectedAggregate);
+              if (d.selectedDateBy) setSelectedDateBy(d.selectedDateBy);
             }
           }
         }
@@ -1341,37 +1375,7 @@ export default function ResultPage({
 
   const renderVisualizationOptions = () => {
     return visualizationOptions.map(
-      (option: {
-        value:
-          | string
-          | number
-          | bigint
-          | ((prevState: string) => string)
-          | null
-          | undefined;
-        icon:
-          | string
-          | number
-          | bigint
-          | boolean
-          | React.ReactElement<any, string | React.JSXElementConstructor<any>>
-          | Iterable<React.ReactNode>
-          | React.ReactPortal
-          | Promise<React.AwaitedReactNode>
-          | null
-          | undefined;
-        label:
-          | string
-          | number
-          | bigint
-          | boolean
-          | React.ReactElement<any, string | React.JSXElementConstructor<any>>
-          | Iterable<React.ReactNode>
-          | React.ReactPortal
-          | Promise<React.AwaitedReactNode>
-          | null
-          | undefined;
-      }) => (
+      (option: { value: string; icon: React.ReactNode; label: string }) => (
         <Card
           isPressable
           key={option.value}
@@ -1522,17 +1526,19 @@ export default function ResultPage({
     limit,
     dateView,
     dateBy,
-    rawQuery, // new parameter
+    rawQuery,
+    query,
     binColumn,
     binSize,
   }: {
-    aggregate?: string;
+    aggregate?: string | null;
     column?: string;
     groupBy?: string | string[];
     limit?: number;
     dateView?: string;
-    dateBy?: string;
-    rawQuery?: string;
+    dateBy?: string | null;
+    rawQuery?: boolean | string;
+    query?: string;
     binColumn?: string;
     binSize?: number;
   }) => {
@@ -1592,8 +1598,8 @@ export default function ResultPage({
       if (dateView) params.append("dateView", dateView);
       if (dateBy) params.append("dateBy", dateBy);
       if (rawQuery) {
-        params.append("rawQuery", rawQuery);
-        params.append("query", sqlAiQuery);
+        params.append("rawQuery", rawQuery.toString());
+        params.append("query", query || sqlAiQuery);
       }
       if (binColumn) params.append("binColumn", binColumn);
       if (binSize) params.append("binSize", binSize.toString());
@@ -1615,7 +1621,7 @@ export default function ResultPage({
       setDatetimeColumns(datetimeColumns);
 
       const formattedRows = data.rows.map((row: any) =>
-        formatRowData(row, datetimeColumns, dateBy)
+        formatRowData(row, datetimeColumns, dateBy || undefined)
       );
 
       console.log("Formatted Rows:", formattedRows);
@@ -1628,7 +1634,7 @@ export default function ResultPage({
       if (dateBy || groupByValue.length == 2) {
         const { pivotData, pivotColumns, rowKey } = autoPivotRows(
           formattedRows,
-          dateBy
+          dateBy || undefined
         );
         console.log("Pivot Data1:", pivotData);
         console.log("Pivot Columns:", pivotColumns);
@@ -2029,7 +2035,7 @@ export default function ResultPage({
 
       // Format datetime columns for display
       const formattedRows = data.rows.map((row: any) =>
-        formatRowData(row, datetimeColumns, queryOptions.dateBy)
+        formatRowData(row, datetimeColumns, selectedDateBy || undefined)
       );
 
       setRows(formattedRows); // Use formatted values for display
@@ -2087,13 +2093,11 @@ export default function ResultPage({
                     >
                       <Tooltip content="Refresh API Data" placement="bottom">
                         <Button
-                          isIconOnly
-                          color="primary"
+                          size="icon"
                           variant="ghost"
                           className="flex items-center h-8 rounded-sm transition-all ease-in-out"
                           onClick={refreshApiData}
-                          isLoading={isRefreshing}
-                          isDisabled={isRefreshing || !apiId}
+                          disabled={isRefreshing || !apiId}
                         >
                           <RefreshCw
                             height={18}
@@ -2105,8 +2109,7 @@ export default function ResultPage({
                     </motion.div>
                   <Tooltip content="Advanced Settings" placement="bottom">
                     <Button
-                      isIconOnly
-                      color="default"
+                      size="icon"
                       variant="ghost"
                       className="flex items-center h-8 rounded-sm transition-all ease-in-out"
                       onClick={handleVisualizeData}
@@ -2119,22 +2122,19 @@ export default function ResultPage({
                     setQueryLoading={setQueryLoading}
                     setSqlQuery={setSqlQuery}
                     connectionId={connection_id || ""}
-                    datasetId={dataset_id}
+                    datasetId={Array.isArray(dataset_id) ? dataset_id[0] : (dataset_id || "")}
                     type={type}
                     tableName={tableName || ""}
                     columns={columns}
                     rows={rows}
                     filters={filters}
                     setFilters={setFilters}
-                    setSqlQuery={setSqlQuery}
                     sqlQuery={sqlQuery}
                     setColumns={setColumns}
                     setRows={setRows}
-                    actionLabel="Apply"
                     isOpen={isFilterOpen}
                     onOpen={onFilterOpen}
                     onOpenChange={onFilterClose}
-                    onAction={handleFilterOpen}
                     applyFilters={applyFilters}
                     onFilterChange={(filter) =>
                       console.log("Filter changed:", filter)
@@ -2321,8 +2321,10 @@ export default function ResultPage({
                     <PopoverContent className="p-4" align="end" side="top">
                       <RadioGroup
                         value={limitOption}
-                        onValueChange={(val: "default" | "custom") => {
-                          setLimitOption(val);
+                        onValueChange={(val: string) => {
+                          if (val === "default" || val === "custom") {
+                            setLimitOption(val);
+                          }
                           if (val === "default") {
                             // Immediately apply default limit.
                             setLimit(100);
@@ -2344,7 +2346,7 @@ export default function ResultPage({
                           <Input
                             id="custom-limit"
                             type="number"
-                            value={customLimit}
+                            value={customLimit !== undefined ? String(customLimit) : ""}
                             onValueChange={(val) => setCustomLimit(Number(val))}
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
@@ -2449,6 +2451,8 @@ export default function ResultPage({
               handleApiUrlChange={handleApiUrlChange}
               renderVisualizationOptions={renderVisualizationOptions}
               RenderVisualizationSettings={RenderVisualizationSettings}
+              showSummarizePanel={showSummarizePanel}
+              setShowSummarizePanel={setShowSummarizePanel}
             />
             <SummarizePanel
               showPanel={showSummarizePanel}
@@ -2457,7 +2461,6 @@ export default function ResultPage({
               columnTypes={columnTypes}
               datetimeColumns={datetimeColumns}
               setDatetimeColumns={setDatetimeColumns}
-              setColumnTypes={setColumnTypes}
               setAllColumns={setAllColumns}
               sqlQuery={sqlAiQuery}
               setShowPanel={setShowSummarizePanel}
@@ -2481,6 +2484,7 @@ export default function ResultPage({
               setSqlQuery={setSqlQuery}
               setColumns={setColumns}
               showSummarizePanel={showSummarizePanel}
+              showSidePanel={showSidePanel}
               setShowSummarizePanel={setShowSummarizePanel}
             />
           </div>

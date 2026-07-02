@@ -30,34 +30,34 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface MultiSelectSelectProps {
   columns: string[];
-  rows: string[];
-  allColumns: string[];
+  rows: any[];
+  allColumns?: string[];
   connectionId: string;
   tableName: string;
-  allColumsn: string[];
+  allColumsn?: string[];
   columnMetadata: any[];
   selectedAggregate: string | null;
   selectedValues: string[];
   aggregateOptions: any[];
   currentOptions: any[];
-  groupByValue: any[];
-  isSelectedMap: { [key: string]: boolean };
+  groupByValue?: any[];
+  isSelectedMap?: { [key: string]: boolean };
   setSelectedAggregate: (val: string | null) => void;
   setSelectedValues: (val: string[]) => void;
   setCurrentOptions: (val: any[]) => void;
-  setAllColumns: (columns: string[]) => void;
-  setSelectedGroupBy: (val: string | []) => void;
-  setIsSelectedMap: (val: { [key: string]: boolean }) => void;
-  setSqlQuery: (query: string) => void;
-  fetchDefaultQuery: () => void;
-  setColumnType: (column: string, type: string) => void;
-  setVisualizationType: (type: string) => void;
-  setRows: (rows: string[]) => void;
-  setColumns: (columns: string[]) => void;
-  setGroupByValue: (val: any[]) => void;
-  setQueryLoading: (val: boolean) => void;
-  setPrimaryKeys: (keys: string) => void;
-  fetchDbData: ({aggregate, column}: {aggregate: string, column?: string}) => void;
+  setAllColumns?: (columns: string[]) => void;
+  setSelectedGroupBy?: (val: string | []) => void;
+  setIsSelectedMap?: (val: { [key: string]: boolean }) => void;
+  setSqlQuery?: (query: string) => void;
+  fetchDefaultQuery?: () => void | Promise<void>;
+  setColumnType?: (column: string, type: string) => void;
+  setVisualizationType?: (type: string) => void;
+  setRows?: (rows: string[]) => void;
+  setColumns?: (columns: string[]) => void;
+  setGroupByValue?: (val: any[]) => void;
+  setQueryLoading?: (val: boolean) => void;
+  setPrimaryKeys?: (keys: string) => void;
+  fetchDbData: (params: any) => void;
 }
 
 const MultiSelectSelect = ({
@@ -94,12 +94,22 @@ const MultiSelectSelect = ({
   const [step, setStep] = useState(1);
 
   const getNumericColumns = () => {
-    if (columnMetadata.length > 0) {
+    if (columnMetadata && columnMetadata.length > 0) {
       return columnMetadata
         .filter((col) =>
-          ["integer", "float", "double", "decimal", "numeric"].includes(
-            col.type.toLowerCase()
-          )
+          [
+            "integer",
+            "int",
+            "bigint",
+            "smallint",
+            "float",
+            "double",
+            "double precision",
+            "real",
+            "decimal",
+            "numeric",
+            "number",
+          ].includes((col.type || "").toLowerCase())
         )
         .map((col) => ({
           value: col.name,
@@ -108,7 +118,14 @@ const MultiSelectSelect = ({
         }));
     } else {
       return columns
-        .filter((col) => rows.every((row) => !isNaN(Number(row[col]))))
+        .filter((col) => {
+          if (!rows || rows.length === 0) return false;
+          return rows.every((row) => {
+            const val = row[col];
+            if (val === null || val === undefined || val === "") return true; // ignore nulls
+            return !isNaN(Number(val));
+          });
+        })
         .map((col) => ({
           value: col,
           label: col,
@@ -151,9 +168,9 @@ const MultiSelectSelect = ({
     setSelectedValues([]); // Clear selected values to ensure isAggregateComplete becomes false
     setStep(1);
     setCurrentOptions(aggregateOptions);
-    setGroupByValue([]);
-    fetchDefaultQuery();
-    setVisualizationType("table");
+    setGroupByValue?.([]);
+    fetchDefaultQuery?.();
+    setVisualizationType?.("table");
   };  
 
   return (

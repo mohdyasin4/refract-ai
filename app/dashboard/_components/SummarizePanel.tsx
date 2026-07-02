@@ -46,23 +46,23 @@ interface SummarizePanelProps {
   datetimeColumns: string[];
   allColumns: string[];
   columnTypes: any[];
-  selectedAggregate: string;
+  selectedAggregate: string | null;
   selectedValues: string[];
   selectedDateBy: string;
   sqlQuery: string;
   groupByValue: string[];
   setGroupByValue: (value: string[]) => void;
-  setSelectedAggregate: (value: string) => void;
+  setSelectedAggregate: (value: string | null) => void;
   setSelectedColumn: (value: string) => void;
   setSelectedValues: (val: string[]) => void;
-  setColumnType: (column: string, type: string) => void;
+  setColumnType?: (column: string, type: string) => void;
   setDatetimeColumns: (columns: string[]) => void;
   setAllColumns: (columns: string[]) => void;
   setQueryLoading: (value: boolean) => void;
   setRows: (rows: string[]) => void;
-  setColumns: (columns: string) => void;
+  setColumns: (columns: string[]) => void;
   setSqlQuery: (query: string) => void;
-  onResetData: () => void;
+  onResetData?: () => void;
   setPrimaryKeys: (keys: string) => void;
   setShowPanel: (show: boolean) => void;
   setVisualizationType: (type: string) => void;
@@ -196,7 +196,7 @@ export default function SummarizePanel({
       setRows(formattedRows);
       setColumns(data.columns);
       setAllColumns(data.columns);
-      setColumnType(data.columnTypes.columnName, data.columnTypes.dataType);
+      if (setColumnType && data.columnTypes?.columnName) setColumnType(data.columnTypes.columnName, data.columnTypes.dataType);
       setColumnMetadata(data.columnMetadata || []);
       setPrimaryKeys(data.primaryKeys);
       setSqlQuery(data.query);
@@ -286,7 +286,14 @@ export default function SummarizePanel({
                 setGroupByValue={setGroupByValue}
                 aggregateOptions={aggregateOptions}
                 setCurrentOptions={setCurrentOptions}
-                columnMetadata={columnMetadata}
+                columnMetadata={
+                  columnMetadata && columnMetadata.length > 0
+                    ? columnMetadata
+                    : (columnTypes || []).map((col: any) => ({
+                        name: col.columnName,
+                        type: col.dataType,
+                      }))
+                }
                 columns={columns}
                 setColumnType={setColumnType}
                 setPrimaryKeys={setPrimaryKeys}

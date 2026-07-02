@@ -77,7 +77,7 @@ const emotionalVoiceConfig = {
  * Check if text-to-speech is supported in the current browser
  */
 export const isSpeechSynthesisSupported = (): boolean => {
-  return 'speechSynthesis' in window;
+  return typeof window !== 'undefined' && 'speechSynthesis' in window;
 };
 
 /**

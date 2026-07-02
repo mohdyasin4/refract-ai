@@ -71,7 +71,7 @@ function cleanExpiredCache() {
 // Clean cache every 30 minutes
 setInterval(cleanExpiredCache, 30 * 60 * 1000);
 
-const API_KEY = "AIzaSyDqYGX7pFXyp6KZhOJmKjFOaFuwpkxVnHQ";
+const API_KEY = process.env.GEMINI_API_KEY; 
 
 // Initialize Gemini models once for reuse
 const genAI = new GoogleGenerativeAI(API_KEY);
@@ -82,7 +82,7 @@ const tools = [
     tools,
     responseMimeType: 'text/plain',
   };
-const fastModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+const fastModel = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
 // Helper: Get cached AI response
 function getCachedAiResponse(key: string): string | null {
@@ -100,11 +100,12 @@ function cacheAiResponse(key: string, response: string): void {
 
 // Helper: Fetch schema for a specific table (optimized)
 async function fetchTableSchema(connectionDetails: any, tableName: string): Promise<any> {
-  const { database_type, host, database_name, username, password } = connectionDetails;
+  const { database_type, host, port, database_name, username, password } = connectionDetails;
 
   if (database_type === "postgres") {
     const pgClient = await connectToPostgres({
       host,
+      port,
       database: database_name,
       user: username,
       password,
@@ -115,6 +116,7 @@ async function fetchTableSchema(connectionDetails: any, tableName: string): Prom
   } else if (database_type === "mysql") {
     const mysqlConnection = await connectToMySQL({
       host,
+      port,
       database: database_name,
       user: username,
       password,
@@ -173,13 +175,14 @@ async function fetchMySQLTableNames(mysqlConnection: any): Promise<string[]> {
 // This provides comprehensive database context to the AI for better SQL generation,
 // query optimization, and explanations by understanding table relationships and structure.
 async function fetchAllTableSchemas(connectionDetails: any): Promise<any> {
-  const { database_type, host, database_name, username, password } =
+  const { database_type, host, port, database_name, username, password } =
     connectionDetails;
   let schemas: Record<string, any> = {};
 
   if (database_type === "postgres") {
     const pgClient = await connectToPostgres({
       host,
+      port,
       database: database_name,
       user: username,
       password,
@@ -194,6 +197,7 @@ async function fetchAllTableSchemas(connectionDetails: any): Promise<any> {
   } else if (database_type === "mysql") {
     const mysqlConnection = await connectToMySQL({
       host,
+      port,
       database: database_name,
       user: username,
       password,
@@ -246,7 +250,7 @@ export async function POST(req: NextRequest) {
         if (!connectionDetails) {
           const { data, error } = await supabaseClient
             .from("database_connections")
-            .select("database_type, host, database_name, username, password")
+            .select("database_type, host, port, database_name, username, password")
             .eq("id", connection_id)
             .single();
           if (error) {
@@ -348,7 +352,7 @@ Complete with:`;
           if (!connectionDetails) {
             const { data, error } = await supabaseClient
               .from("database_connections")
-              .select("database_type, host, database_name, username, password")
+              .select("database_type, host, port, database_name, username, password")
               .eq("id", connection_id)
               .single();
             if (error) {
@@ -559,7 +563,7 @@ Optimized Query:`;
           if (!connectionDetails) {
             const { data, error } = await supabaseClient
               .from("database_connections")
-              .select("database_type, host, database_name, username, password")
+              .select("database_type, host, port, database_name, username, password")
               .eq("id", connection_id)
               .single();
             if (error) {
@@ -679,7 +683,7 @@ Simple explanation:`)
         if (!connectionDetails) {
           const { data, error } = await supabaseClient
             .from("database_connections")
-            .select("database_type, host, database_name, username, password")
+            .select("database_type, host, port, database_name, username, password")
             .eq("id", connection_id)
             .single();
           if (error) {
@@ -856,7 +860,7 @@ Keep it brief, conversational, and focused:`;      try {
         if (!connectionDetails) {
           const { data, error } = await supabaseClient
             .from("database_connections")
-            .select("database_type, host, database_name, username, password")
+            .select("database_type, host, port, database_name, username, password")
             .eq("id", connection_id)
             .single();
           if (error) {
@@ -1074,7 +1078,7 @@ Return format: ["suggestion 1", "suggestion 2", "suggestion 3", "suggestion 4"]
         if (!connectionDetails) {
           const { data, error } = await supabaseClient
             .from("database_connections")
-            .select("database_type, host, database_name, username, password")
+            .select("database_type, host, port, database_name, username, password")
             .eq("id", connection_id)
             .single();
           if (error) {

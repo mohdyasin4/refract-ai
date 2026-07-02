@@ -48,23 +48,12 @@ export async function GET(
   let finalQuery = queryParam || dataset.sql_query;
   console.log("Original Query:", finalQuery);
 
-  // Apply query transformation **only if dateBy or selectedDateBy exists**
-  if (selectedDateBy) {
-    try {
-      finalQuery = manipulateRawQueryWithGroupBy(finalQuery, selectedDateBy);
-      console.log("Updated Query After Manipulation:", finalQuery);
-    } catch (error) {
-      console.error("Error manipulating query:", error);
-      return NextResponse.json({ error: 'Error processing query transformation' }, { status: 500 });
-    }
-  }
-
   // Fetch database connection details (from cache or Supabase)
   let dbConnection = getDbConnectionDetails(connection_id);
   if (!dbConnection) {
     const { data: fetchedDbConnection, error: dbConnectionError } = await supabaseClient
       .from('database_connections')
-      .select('database_type, host, database_name, username, password')
+      .select('database_type, host, port, database_name, username, password')
       .eq('id', connection_id)
       .single();
 
@@ -77,28 +66,37 @@ export async function GET(
     setDbConnectionDetails(connection_id, dbConnection);
   }
 
-  console.log('Fetched or cached database connection:', dbConnection);
+  const { database_type, host, port, database_name, username, password } = dbConnection;
 
-  const { database_type, host, database_name, username, password } = dbConnection;
+  // Apply query transformation **only if dateBy or selectedDateBy exists**
+  if (selectedDateBy) {
+    try {
+      finalQuery = manipulateRawQueryWithGroupBy(finalQuery, selectedDateBy, undefined, database_type);
+      console.log("Updated Query After Manipulation:", finalQuery);
+    } catch (error) {
+      console.error("Error manipulating query:", error);
+      return NextResponse.json({ error: 'Error processing query transformation' }, { status: 500 });
+    }
+  }
 
   try {
     let datasetData: { columns: string[], rows: any[] };
 
     switch (database_type) {
       case 'postgres': {
-        const pgClient = await connectToPostgres({ host, database: database_name, user: username, password });
+        const pgClient = await connectToPostgres({ host, port, database: database_name, user: username, password });
         datasetData = await executeDatasetQuery(pgClient, finalQuery, 'postgres');
         await pgClient.end();
         break;
       }
       case 'mysql': {
-        const mysqlConnection = await connectToMySQL({ host, database: database_name, user: username, password });
+        const mysqlConnection = await connectToMySQL({ host, port, database: database_name, user: username, password });
         datasetData = await executeDatasetQuery(mysqlConnection, finalQuery, 'mysql');
         await mysqlConnection.end();
         break;
       }
       case 'mongodb': {
-        const mongoConnection = await connectToMongoDB({ host, database: database_name, user: username, password });
+        const mongoConnection = await connectToMongoDB({ host, port, database: database_name, user: username, password });
         datasetData = await executeDatasetQuery(mongoConnection.db, finalQuery, 'mongodb');
         await mongoConnection.client.close();
         break;

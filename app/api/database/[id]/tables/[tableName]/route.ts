@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseClient } from "@/lib/supabaseClient";
 import {
   connectToPostgres,
-  queryPostgresTable,
+  executePostgresQuery,
   connectToMySQL,
   queryMySQLTable,
   connectToMongoDB,
@@ -50,7 +50,7 @@ export async function GET(
   if (!connectionDetails) {
     const { data, error } = await supabaseClient
       .from("database_connections")
-      .select("database_type, host, database_name, username, password")
+      .select("database_type, host, port, database_name, username, password")
       .eq("id", id)
       .single();
 
@@ -64,7 +64,7 @@ export async function GET(
     setDbConnectionDetails(id, connectionDetails);
   }
 
-  const { database_type, host, database_name, username, password } =
+  const { database_type, host, port, database_name, username, password } =
     connectionDetails;
   const queryParams = req.nextUrl.searchParams;
   const fetchSchema = queryParams.get("schema") === "true"; // Check if schema param is present
@@ -94,6 +94,7 @@ export async function GET(
     dateView: queryParams.get("dateView"),
     dateBy: queryParams.get("dateBy"),
     filters: filtersArray,
+    databaseType: database_type,
   };
   const rawQueryFlag = queryParams.get("rawQuery") === "true";
   const directQuery = queryParams.get("query");
@@ -109,7 +110,8 @@ export async function GET(
     finalQuery = manipulateRawQueryWithGroupBy(
       directQuery,
       queryOptions.dateBy,
-      additionalGroupBy || undefined
+      additionalGroupBy || undefined,
+      database_type
     );
   } else if (rawQueryFlag && directQuery && directQuery.trim().length > 0) {
     finalQuery = directQuery;
@@ -139,11 +141,12 @@ export async function GET(
       case "postgres": {
         const pgClient = await connectToPostgres({
           host,
+          port,
           database: database_name,
           user: username,
           password,
         });
-        const pgResult = await queryPostgresTable(pgClient, finalQuery);
+        const pgResult = await executePostgresQuery(pgClient, finalQuery);
         const columnTypes = tableNameForTypes
           ? await getPostgresColumnTypes(pgClient, tableNameForTypes)
           : [];
@@ -164,6 +167,7 @@ export async function GET(
       case "mysql": {
         const mysqlConnection = await connectToMySQL({
           host,
+          port,
           database: database_name,
           user: username,
           password,
@@ -206,6 +210,7 @@ export async function GET(
       case "mongodb": {
         const mongoDb = await connectToMongoDB({
           host,
+          port,
           database: database_name,
           user: username,
           password,
@@ -242,10 +247,14 @@ export async function GET(
     }
 
     return NextResponse.json(tableData, { status: 200 });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error:", err);
     return NextResponse.json(
-      { error: "Error connecting to the database or querying the table" },
+      { 
+        error: "Error connecting to the database or querying the table",
+        details: err?.message || String(err),
+        query: finalQuery
+      },
       { status: 500 }
     );
   }

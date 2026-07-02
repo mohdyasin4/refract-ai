@@ -25,7 +25,8 @@ function escapeRegExp(str: string): string {
 export function manipulateRawQueryWithGroupBy(
   rawQuery: string,
   dateBy: string,
-  additionalGroupBy?: string
+  additionalGroupBy?: string,
+  databaseType?: string
 ): string {
   // Remove trailing semicolon for consistency
   const cleanedQuery = rawQuery.trim().replace(/;$/, "");
@@ -110,13 +111,14 @@ export function manipulateRawQueryWithGroupBy(
     manipulatedQuery = manipulatedQuery.replace(
       /GROUP BY\s+([\s\S]+?)\s+(ORDER BY|LIMIT)/i,
       (matchStr, groupContent, nextClause) => {
-        let groupCols = groupContent.split(",").map((s) => s.trim());
+        let groupCols = groupContent.split(",").map((s: string) => s.trim());
         if (!groupCols.includes(newDateExpression)) {
           groupCols.unshift(newDateExpression);
         }
+        const quote = (ident: string) => databaseType === "postgres" ? `"${ident}"` : `\`${ident}\``;
         additionalGroupBy.split(",").forEach((col) => {
           const trimmed = col.trim();
-          const colExpr = `\`${trimmed}\``;
+          const colExpr = quote(trimmed);
           if (!groupCols.includes(colExpr)) {
             groupCols.push(colExpr);
           }
@@ -128,13 +130,14 @@ export function manipulateRawQueryWithGroupBy(
     manipulatedQuery = manipulatedQuery.replace(
       /ORDER BY\s+([\s\S]+?)\s+(LIMIT)/i,
       (matchStr, orderContent, nextClause) => {
-        let orderCols = orderContent.split(",").map((s) => s.trim());
+        let orderCols = orderContent.split(",").map((s: string) => s.trim());
         if (!orderCols.includes(newDateExpression)) {
           orderCols.unshift(newDateExpression);
         }
+        const quote = (ident: string) => databaseType === "postgres" ? `"${ident}"` : `\`${ident}\``;
         additionalGroupBy.split(",").forEach((col) => {
           const trimmed = col.trim();
-          const colExpr = `\`${trimmed}\``;
+          const colExpr = quote(trimmed);
           if (!orderCols.includes(colExpr)) {
             orderCols.push(colExpr);
           }
@@ -163,14 +166,22 @@ export function buildQuery(
     dateBy,
     binColumn,
     binSize,
+    databaseType,
   } = params;
+
+  const quoteIdentifier = (ident: string) => {
+    if (databaseType === "postgres") {
+      return `"${ident}"`;
+    }
+    return `\`${ident}\``;
+  };
 
   // Helper function to apply binning to a column
   const applyBin = (col: string) => {
     if (binColumn && binSize && col === binColumn) {
-      return `FLOOR(\`${col}\` / ${binSize}) * ${binSize}`;
+      return `FLOOR(${quoteIdentifier(col)} / ${binSize}) * ${binSize}`;
     }
-    return `${tableNameSQL}.\`${col}\``;
+    return `${tableNameSQL}.${quoteIdentifier(col)}`;
   };
 
   // Split incoming column string into an array (if provided)
@@ -184,8 +195,8 @@ export function buildQuery(
       : null;
 
   const datetimeColumn = datetimeCandidate || "";
-  const nonDatetimeColumns = columnsArr.filter((c) => c !== datetimeColumn);
-  const tableNameSQL = `\`${tableName}\``;
+  const nonDatetimeColumns = columnsArr.filter((c: string) => c !== datetimeColumn);
+  const tableNameSQL = quoteIdentifier(tableName);
 
   let query = "";
 
@@ -219,18 +230,18 @@ export function buildQuery(
         dateExpression = datetimeColSQL;
     }
 
-    const dateSelect = `${dateExpression} AS \`${datetimeColumn}\``;
+    const dateSelect = `${dateExpression} AS ${quoteIdentifier(datetimeColumn)}`;
     const normalSelect = nonDatetimeColumns
-      .map((col: string) => `${applyBin(col)} AS \`${col}\``)
+      .map((col: string) => `${applyBin(col)} AS ${quoteIdentifier(col)}`)
       .join(", ");
 
     let selectClause = "";
     if (aggregate === "count") {
       selectClause = normalSelect
-        ? `${dateSelect}, ${normalSelect}, COUNT(*) AS \`count\``
-        : `${dateSelect}, COUNT(*) AS \`count\``;
+        ? `${dateSelect}, ${normalSelect}, COUNT(*) AS ${quoteIdentifier("count")}`
+        : `${dateSelect}, COUNT(*) AS ${quoteIdentifier("count")}`;
     } else if (aggregate && datetimeColumn) {
-      const aggSelect = `${aggregate.toUpperCase()}(${datetimeColumn}) AS \`${datetimeColumn}_${aggregate}\``;
+      const aggSelect = `${aggregate.toUpperCase()}(${datetimeColumn}) AS ${quoteIdentifier(`${datetimeColumn}_${aggregate}`)}`;
       selectClause = normalSelect
         ? `${dateSelect}, ${normalSelect}, ${aggSelect}`
         : `${dateSelect}, ${aggSelect}`;
@@ -245,7 +256,7 @@ export function buildQuery(
       const conditions = filters
         .map(
           (filter: any) =>
-            `\`${filter.column}\` ${filter.operation} '${filter.value}'`
+            `${quoteIdentifier(filter.column)} ${filter.operation} '${filter.value}'`
         )
         .join(" AND ");
       query += ` WHERE ${conditions}`;
@@ -257,7 +268,7 @@ export function buildQuery(
     let groupByClause = "";
     if (groupBy) {
       const groupByCols = groupBy.split(",").map((c: string) => c.trim());
-      groupByCols.sort((a, b) => {
+      groupByCols.sort((a: string, b: string) => {
         if (a.toLowerCase() === datetimeColumn.toLowerCase()) return -1;
         if (b.toLowerCase() === datetimeColumn.toLowerCase()) return 1;
         return 0;
@@ -298,7 +309,7 @@ export function buildQuery(
           .join(", ") + ", ";
     }
     if (aggregate === "count") {
-      selectClause += "COUNT(*) AS `count`";
+      selectClause += `COUNT(*) AS ${quoteIdentifier("count")}`;
     } else if (aggregate && column) {
       const cols = column.split(",").map((c: string) => c.trim());
       selectClause += `${aggregate.toUpperCase()}(${cols.join(
@@ -314,7 +325,7 @@ export function buildQuery(
       const conditions = filters
         .map(
           (filter: any) =>
-            `\`${filter.column}\` ${filter.operation} '${filter.value}'`
+            `${quoteIdentifier(filter.column)} ${filter.operation} '${filter.value}'`
         )
         .join(" AND ");
       query += ` WHERE ${conditions}`;

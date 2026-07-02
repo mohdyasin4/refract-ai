@@ -100,7 +100,6 @@ const ApiDetails = () => {
   return (
         <ResultPage
           apiId={Array.isArray(apiId) ? apiId[0] : apiId}
-          tableName={"table_name"}
           sourceType="api"
           type="table"
         />

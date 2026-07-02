@@ -242,21 +242,19 @@ export const DataTable = forwardRef<any, DataTableProps<any>>(
         cell.column.columnDef.header as string
       );
 
-      setFilters((prev: FilterRow[]) => {
-        const newFilters = [
-          ...prev.filter((filter) => filter.column !== dbColumnName),
-          {
-            type: "string",
-            value: String(cellValue),
-            id: Date.now(),
-            column: dbColumnName,
-            operation: opValue,
-          },
-        ];
-        applyFilters(newFilters);
-        return newFilters;
-      });
-    }, [applyFilters, convertToDBColumn, setFilters]);
+      const newFilters = [
+        ...filters.filter((filter) => filter.column !== dbColumnName),
+        {
+          type: "string",
+          value: String(cellValue),
+          id: Date.now(),
+          column: dbColumnName,
+          operation: opValue,
+        },
+      ];
+      setFilters(newFilters);
+      applyFilters(newFilters);
+    }, [applyFilters, convertToDBColumn, filters, setFilters]);
 
     const handleDateFilter = React.useCallback((
       cell: any,
@@ -283,21 +281,19 @@ export const DataTable = forwardRef<any, DataTableProps<any>>(
 
       const formattedDate = formatToDBDate(rawValue);
 
-      setFilters((prev: FilterRow[]) => {
-        const newFilters = [
-          ...prev.filter((filter) => filter.column !== dbColumnName),
-          {
-            type: operation,
-            value: formattedDate,
-            id: Date.now(),
-            column: dbColumnName,
-            operation: sqlOperation,
-          },
-        ];
-        applyFilters(newFilters);
-        return newFilters;
-      });
-    }, [applyFilters, convertToDBColumn, setFilters]);
+      const newFilters = [
+        ...filters.filter((filter) => filter.column !== dbColumnName),
+        {
+          type: operation,
+          value: formattedDate,
+          id: Date.now(),
+          column: dbColumnName,
+          operation: sqlOperation,
+        },
+      ];
+      setFilters(newFilters);
+      applyFilters(newFilters);
+    }, [applyFilters, convertToDBColumn, filters, setFilters]);
 
     const handleNumberFilter = React.useCallback((
       cell: any,
@@ -311,43 +307,39 @@ export const DataTable = forwardRef<any, DataTableProps<any>>(
       const dbColumnName = convertToDBColumn(
         cell.column.columnDef.header as string
       );
-      setFilters((prev: FilterRow[]) => {
-        const filtered = prev.filter(
-          (filter) => filter.column !== dbColumnName
-        );
-        const newFilter: FilterRow = {
-          type: "number",
-          value: cellValue,
-          id: Date.now(),
-          column: dbColumnName,
-          operation: opValue,
-        };
-        const newFilters = [...filtered, newFilter];
-        applyFilters(newFilters);
-        return newFilters;
-      });
-    }, [applyFilters, convertToDBColumn, setFilters]);
+      const filtered = filters.filter(
+        (filter) => filter.column !== dbColumnName
+      );
+      const newFilter: FilterRow = {
+        type: "number",
+        value: cellValue,
+        id: Date.now(),
+        column: dbColumnName,
+        operation: opValue,
+      };
+      const newFilters = [...filtered, newFilter];
+      setFilters(newFilters);
+      applyFilters(newFilters);
+    }, [applyFilters, convertToDBColumn, filters, setFilters]);
 
     const handleBooleanFilter = React.useCallback((cell: any, cellValue: any) => {
       const dbColumnName = convertToDBColumn(
         cell.column.columnDef.header as string
       );
-      setFilters((prev: FilterRow[]) => {
-        const filtered = prev.filter(
-          (filter) => filter.column !== dbColumnName
-        );
-        const newFilter: FilterRow = {
-          type: "equals",
-          value: cellValue,
-          id: Date.now(),
-          column: dbColumnName,
-          operation: "equals",
-        };
-        const newFilters = [...filtered, newFilter];
-        applyFilters(newFilters);
-        return newFilters;
-      });
-    }, [applyFilters, convertToDBColumn, setFilters]);
+      const filtered = filters.filter(
+        (filter) => filter.column !== dbColumnName
+      );
+      const newFilter: FilterRow = {
+        type: "equals",
+        value: cellValue,
+        id: Date.now(),
+        column: dbColumnName,
+        operation: "equals",
+      };
+      const newFilters = [...filtered, newFilter];
+      setFilters(newFilters);
+      applyFilters(newFilters);
+    }, [applyFilters, convertToDBColumn, filters, setFilters]);
 
     useImperativeHandle(ref, () => ({
       applyFilters,
@@ -706,9 +698,9 @@ export const DataTable = forwardRef<any, DataTableProps<any>>(
                               </DropdownTrigger>
                               <DropdownMenu>
                                 {(
-                                  header.column.columnDef.dropdownItems || []
+                                  (header.column.columnDef as any).dropdownItems || []
                                 ).map(
-                                  (item, index) => (
+                                  (item: any, index: number) => (
                                     <DropdownItem
                                       key={index}
                                       startContent={renderIcon(item.icon)}

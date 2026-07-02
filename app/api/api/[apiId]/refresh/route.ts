@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
     const {
       database_type: type,
       host,
+      port,
       database_name: database,
       username: user,
       password,
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
     const primaryKey = "id"; // Customize if your data uses a different primary key
 
     if (type === "postgres") {
-      const client = await connectToPostgres({ host, database, user, password });
+      const client = await connectToPostgres({ host, port, database, user, password });
 
       const firstRow = data[0];
       const columns = Object.keys(firstRow);
@@ -51,9 +52,9 @@ export async function POST(req: NextRequest) {
       await client.query(`CREATE TABLE IF NOT EXISTS "${tableName}" (${columnDefs}, PRIMARY KEY ("${primaryKey}"));`);
 
       // Delete stale rows
-      const incomingIds = data.map((row) => row[primaryKey]);
+      const incomingIds = data.map((row: any) => row[primaryKey]);
       await client.query(
-        `DELETE FROM "${tableName}" WHERE "${primaryKey}" NOT IN (${incomingIds.map((_, i) => `$${i + 1}`).join(", ")})`,
+        `DELETE FROM "${tableName}" WHERE "${primaryKey}" NOT IN (${incomingIds.map((_: any, i: number) => `$${i + 1}`).join(", ")})`,
         incomingIds
       );
 
@@ -87,7 +88,7 @@ export async function POST(req: NextRequest) {
       await connection.execute(`CREATE TABLE IF NOT EXISTS \`${tableName}\` (${columnDefs}, PRIMARY KEY (\`${primaryKey}\`));`);
 
       // Delete stale rows
-      const incomingIds = data.map((row) => row[primaryKey]);
+      const incomingIds = data.map((row: any) => row[primaryKey]);
       const placeholders = incomingIds.map(() => "?").join(", ");
       await connection.execute(
         `DELETE FROM \`${tableName}\` WHERE \`${primaryKey}\` NOT IN (${placeholders})`,
@@ -119,7 +120,7 @@ export async function POST(req: NextRequest) {
       const { db, client } = await connectToMongoDB({ host, database, user, password });
       const collection = db.collection(tableName);
 
-      const incomingIds = data.map((row) => row[primaryKey]);
+      const incomingIds = data.map((row: any) => row[primaryKey]);
 
       // Delete stale rows
       await collection.deleteMany({ [primaryKey]: { $nin: incomingIds } });

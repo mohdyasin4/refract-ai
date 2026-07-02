@@ -55,7 +55,6 @@ interface StoreState {
   setDatasetId: (id: string | null) => void;
   setApiId: (id: string | null) => void;
   setCsvId: (id: string | null) => void;
-  setTableNamee: (name: string) => void;
   setApiDetails: (details: any) => void;
   setAllColumns: (columns: string[]) => void;
   setColumns: (columns: string[]) => void;
@@ -156,7 +155,6 @@ export const useStore = create<StoreState>((set) => ({
   setDatasetId: (id) => set({ dataset_id: id }),
   setApiId: (id) => set({ apiId: id }),
   setCsvId: (id) => set({ csvId: id }),
-  setTableNamee: (name) => set({ tableNamee: name }),
   setApiDetails: (details) => set({ apiDetails: details }),
   setAllColumns: (columns) => set({ allColumns: columns }),
   setColumns: (columns) => set({ columns }),

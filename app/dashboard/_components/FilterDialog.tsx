@@ -50,7 +50,7 @@ interface FilterDialogProps {
   type: string;
   tableName: string;
   applyFilters?: (newFilters?: FilterRow[]) => Promise<void>;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   isOpen: boolean;
   onOpen: () => void;
   onOpenChange: (open: boolean) => void;
@@ -122,9 +122,7 @@ const FilterDialog = forwardRef<any, FilterDialogProps>(
     };
 
     const removeFilter = (id: number) => {
-      setFilters((prev: FilterRow[]) =>
-        prev.filter((filter) => filter.id !== id)
-      );
+      setFilters(filters.filter((filter) => filter.id !== id));
     };
 
     const generateSQLQuery = () => {
@@ -219,7 +217,7 @@ const FilterDialog = forwardRef<any, FilterDialogProps>(
           { id: 1, column: "", operation: "", value: "", valueOptions: [] },
         ]);
         if (isOpen === true) {
-          onOpenChange();
+          onOpenChange(false);
         }
         toast.success("Filters Cleared");
       } catch (error) {

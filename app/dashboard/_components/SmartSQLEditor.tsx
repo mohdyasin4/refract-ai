@@ -29,6 +29,7 @@ interface ProfessionalSQLEditorProps {
   tables?: string[];
   columns?: string[];
   connectionId?: string;
+  theme?: string;
 }
 
 interface DatabaseSchema {

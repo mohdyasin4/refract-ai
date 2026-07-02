@@ -68,16 +68,17 @@ export async function GET(
     // Filter rows based on selected fields
     const filteredRows = allRows.map((row) => {
       const filteredRow: Record<string, any> = {};
+      const r = row as Record<string, any>;
       selectedFields.forEach((field: string) => {
-        if (row && typeof row === "object" && field in row) {
-          filteredRow[field] = row[field];
+        if (r && field in r) {
+          filteredRow[field] = r[field];
         }
       });
       return filteredRow;
     });
 
     // Fetch visualization data from the datasets table
-    const { data: datasetDetails, error: datasetError } = await supabase
+    const { data: datasetDetails, error: datasetError } = await supabaseClient
       .from("datasets")
       .select(
         "selectedField, x_axis, y_axis, is_stacked, visualization_type, sql_query"

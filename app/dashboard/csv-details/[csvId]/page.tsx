@@ -77,7 +77,6 @@ const CsvDetails = () => {
   return (
     <ResultPage
       csvId={Array.isArray(csvId) ? csvId[0] : csvId}
-      tableName={"table_name"}
       sourceType="csv"
       type="table"
     />

@@ -39,7 +39,7 @@ export async function POST(
     if (!connectionDetails) {
       const { data, error } = await supabaseClient
         .from("database_connections")
-        .select("database_type, host, database_name, username, password")
+        .select("database_type, host, port, database_name, username, password")
         .eq("id", id)
         .single();
 
@@ -49,7 +49,7 @@ export async function POST(
       setDbConnectionDetails(id, connectionDetails);
     }
 
-    const { database_type, host, database_name, username, password } =
+    const { database_type, host, port, database_name, username, password } =
       connectionDetails;
 
     // Ensure the query has a LIMIT (max 2000 rows for safety)
@@ -96,6 +96,7 @@ export async function POST(
     switch (database_type) {      case "postgres": {
         const pgClient = await connectToPostgres({
           host,
+          port,
           database: database_name,
           user: username,
           password,
@@ -121,6 +122,7 @@ export async function POST(
       case "mysql": {
         const mysqlConnection = await connectToMySQL({
           host,
+          port,
           database: database_name,
           user: username,
           password,
@@ -146,6 +148,7 @@ export async function POST(
       case "mongodb": {
         const mongoDb = await connectToMongoDB({
           host,
+          port,
           database: database_name,
           user: username,
           password,

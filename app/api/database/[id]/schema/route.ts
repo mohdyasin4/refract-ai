@@ -40,7 +40,7 @@ export async function GET(
     if (!connectionDetails) {
       const { data, error } = await supabaseClient
         .from("database_connections")
-        .select("database_type, host, database_name, username, password")
+        .select("database_type, host, port, database_name, username, password")
         .eq("id", id)
         .single();
 
@@ -56,7 +56,7 @@ export async function GET(
       setDbConnectionDetails(id, connectionDetails);
     }
 
-    const { database_type, host, database_name, username, password } = connectionDetails;
+    const { database_type, host, port, database_name, username, password } = connectionDetails;
     
     const schema: SchemaInfo = {
       tables: [],
@@ -68,6 +68,7 @@ export async function GET(
       case "postgres": {
         const pgClient = await connectToPostgres({
           host,
+          port,
           database: database_name,
           user: username,
           password,
@@ -95,6 +96,7 @@ export async function GET(
       case "mysql": {
         const mysqlConnection = await connectToMySQL({
           host,
+          port,
           database: database_name,
           user: username,
           password,
@@ -122,6 +124,7 @@ export async function GET(
       case "mongodb": {
         const { db, client } = await connectToMongoDB({
           host,
+          port,
           database: database_name,
           user: username,
           password,

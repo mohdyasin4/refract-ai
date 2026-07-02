@@ -12,7 +12,7 @@ type VisualizationRendererProps = {
   columns: string[];
   xAxis: string;
   yAxis: string[];
-  limit: number;
+  limit?: number;
   chartData: any; // Type this based on your chart data structure
   chartConfig: any; // Type this based on your chart config structure
   colors?: string[];
@@ -20,15 +20,15 @@ type VisualizationRendererProps = {
   searchTerm: string;
   tablePagination: boolean; // Flag to control pagination in the data table
   stacked?: boolean; // Prop to toggle stacked bar chart
-  gridWidth: number;
+  gridWidth?: number;
   filters: FilterRow[];
   primaryKeys: string;
   loading: boolean;
   setSearchTerm: (term: string) => void;
   setLimit: (value: number) => void;
   setXAxis: (value:string) => void;
-  setYAxis: (value:string) => void;
-  fetchDbData: (aggregate?: string, column?: string, limit?:string) => void;
+  setYAxis: (value: string[]) => void;
+  fetchDbData: (params: any) => void | Promise<void>;
   applyFilters: (newFilters?: FilterRow[]) => Promise<void>; 
   setFilters: (filter: FilterRow[]) => void;
 };

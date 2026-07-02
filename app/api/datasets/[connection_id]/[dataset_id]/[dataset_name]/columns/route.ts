@@ -28,7 +28,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string; 
   // Fetch database connection details from Supabase
   const { data: dbConnection, error: dbConnectionError } = await supabaseClient
     .from('database_connections')
-    .select('database_type, host, database_name, username, password')
+    .select('database_type, host, port, database_name, username, password')
     .eq('id', id)
     .single();
 
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string; 
     return NextResponse.json({ error: 'Error fetching database details' }, { status: 500 });
   }
 
-  const { database_type, host, database_name, username, password } = dbConnection;
+  const { database_type, host, port, database_name, username, password } = dbConnection;
 
   try {
     let columns: string[] = [];
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string; 
     switch (database_type) {
       case 'postgres':
         console.log('Connecting to Postgres...');
-        const pgClient = await connectToPostgres({ host, database: database_name, user: username, password });
+        const pgClient = await connectToPostgres({ host, port, database: database_name, user: username, password });
         console.log('Postgres connected. Fetching columns for dataset query:', sql_query);
         columns = await listPostgresColumns(pgClient, sql_query); // Adjusted to fetch columns based on query
         await pgClient.end();
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string; 
 
       case 'mysql':
         console.log('Connecting to MySQL...');
-        const mysqlConnection = await connectToMySQL({ host, database: database_name, user: username, password });
+        const mysqlConnection = await connectToMySQL({ host, port, database: database_name, user: username, password });
         console.log('MySQL connected. Fetching columns for dataset query:', sql_query);
         columns = await listMySQLColumns(mysqlConnection, sql_query); // Adjusted to fetch columns based on query
         await mysqlConnection.end();
@@ -61,7 +61,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string; 
 
       case 'mongodb':
         console.log('Connecting to MongoDB...');
-        const { db, client } = await connectToMongoDB({ host, database: database_name, user: username, password });
+        const { db, client } = await connectToMongoDB({ host, port, database: database_name, user: username, password });
         console.log('MongoDB connected. Fetching columns for dataset query:', sql_query);
         columns = await listMongoDBColumns(db, sql_query); // Adjusted to fetch columns based on query
         await client.close();

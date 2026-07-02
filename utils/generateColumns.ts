@@ -35,9 +35,9 @@ function formatValueToString(value: any): string {
 
 export function generateColumns<T extends object>(
   rows: T[],
-  setDialogRow: Dispatch<SetStateAction<T | null>>,
-  setIsDialogOpen: Dispatch<SetStateAction<boolean>>,
-  primaryKey: string // Primary key is a string column name
+  setDialogRow?: Dispatch<SetStateAction<T | null>>,
+  setIsDialogOpen?: Dispatch<SetStateAction<boolean>>,
+  primaryKey?: string // Primary key is a string column name
 ): ColumnDef<T>[] {
   if (rows.length === 0) return [];
 
@@ -63,8 +63,8 @@ export function generateColumns<T extends object>(
               className:
                 "w-full border-small rounded-sm bg-yellow-500/25 border-white/50 px-2 hover:scale-102 transition-all ease-in-out text-bold dark:text-primary text-yellow-500 text-xs whitespace-nowrap",
               onClick: () => {
-                setDialogRow(info.row.original);
-                setIsDialogOpen(true);
+                if (setDialogRow) setDialogRow(info.row.original);
+                if (setIsDialogOpen) setIsDialogOpen(true);
               },
             },
             formatValueToString(value)

@@ -12,7 +12,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string; 
 
   const { data, error } = await supabaseClient
     .from('database_connections')
-    .select('database_type, host, database_name, username, password')
+    .select('database_type, host, port, database_name, username, password')
     .eq('id', id)
     .single();
 
@@ -20,23 +20,23 @@ export async function GET(req: NextRequest, { params }: { params: { id: string; 
     return NextResponse.json({ error: 'Error fetching database details' }, { status: 500 });
   }
 
-  const { database_type, host, database_name, username, password } = data;
+  const { database_type, host, port, database_name, username, password } = data;
 
   try {
     let columns: string[] = [];
     switch (database_type) {
       case 'postgres':
-        const pgClient = await connectToPostgres({ host, database: database_name, user: username, password });
+        const pgClient = await connectToPostgres({ host, port, database: database_name, user: username, password });
         columns = await listPostgresColumns(pgClient, tableName);
         await pgClient.end();
         break;
       case 'mysql':
-        const mysqlConnection = await connectToMySQL({ host, database: database_name, user: username, password });
+        const mysqlConnection = await connectToMySQL({ host, port, database: database_name, user: username, password });
         columns = await listMySQLColumns(mysqlConnection, tableName);
         await mysqlConnection.end();
         break;
       case 'mongodb':
-        const { db, client } = await connectToMongoDB({ host, database: database_name, user: username, password });
+        const { db, client } = await connectToMongoDB({ host, port, database: database_name, user: username, password });
         columns = await listMongoDBColumns(db, tableName);
         await client.close();
         break;

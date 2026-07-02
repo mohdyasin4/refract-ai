@@ -37,7 +37,7 @@ export function DashboardNav({
     return (
       <Tooltip className="rounded-sm text-xs" color="warning" placement="right" key={item.href} content={item.title}>
           <Link
-            href={item.disabled ? "/" : item.href}
+            href={item.disabled ? "/" : (item.href || "#")}
             className={cn(
               "flex items-center w-10 justify-center  gap-1 rounded-sm p-2 text-sm text-muted-foreground font-medium hover:bg-accent hover:text-accent-foreground transition-all duration-300",
               path === item.href ? "bg-accent text-foreground" : "transparent",

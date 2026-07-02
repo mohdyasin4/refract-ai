@@ -9,7 +9,7 @@ export default function Footer() {
         handleSubmit,
         formState: { errors },
         reset,
-    } = useForm();
+    } = useForm<{ email: string }>();
 
     const onSubmit = async (data: any) => {
         // Add your submission logic here, such as sending data to an API or handling user subscriptions.

@@ -33,10 +33,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { database_type: type, host, database_name: database, username: user, password } = connectionDetails;
+    const { database_type: type, host, port, database_name: database, username: user, password } = connectionDetails;
     
     if (type === "postgres") {
-      const client = await connectToPostgres({ host, database, user, password });
+      const client = await connectToPostgres({ host, port, database, user, password });
       const firstRow = data[0];
       const columns = Object.keys(firstRow)
         .map((key) => `"${key}" TEXT`)

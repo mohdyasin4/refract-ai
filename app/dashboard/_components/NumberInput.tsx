@@ -100,10 +100,10 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
       if (value !== undefined) {
         if (value < min) {
           setValue(min);
-          inputRef.current.value = String(min);
+          if (inputRef.current) inputRef.current.value = String(min);
         } else if (value > max) {
           setValue(max);
-          inputRef.current.value = String(max);
+          if (inputRef.current) inputRef.current.value = String(max);
         }
       }
     };

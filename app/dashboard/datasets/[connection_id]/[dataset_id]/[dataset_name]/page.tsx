@@ -54,7 +54,7 @@ const DatasetPage = () => {
   return (
     <div>
       <ResultPage
-        connectionId={sourceType === "database" ? connection_id : null}
+        connectionId={sourceType === "database" ? connection_id : undefined}
         apiId={sourceType === "api" ? connection_id : null}
         dataset_id={dataset_id}
         csvId={sourceType === "csv" ? connection_id : null}

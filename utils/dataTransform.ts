@@ -157,7 +157,7 @@ function detectKeys(data: any[]): { rowKey: string; pivotKey: string; valueKey: 
     pivotKey = keys[1];
   }
 
-  return { rowKey, pivotKey, valueKey };
+  return { rowKey: rowKey || "", pivotKey: pivotKey || "", valueKey: valueKey || "" };
 }
 
 export function autoPivotRows(data: any[], granularity?: string): PivotResult {

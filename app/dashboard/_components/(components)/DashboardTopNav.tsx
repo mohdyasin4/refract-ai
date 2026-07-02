@@ -35,6 +35,7 @@ async function fetchConnectionName(id: string) {
 }
 
 export default function DashboardTopNav({ id }: DashboardTopNavProps) {
+  const { userId } = useAuth();
   const router = useRouter();
   const { tableName } = useParams(); // Get tableName from URL parameters
   const { dataset_name, connection_id } = useParams();
@@ -113,7 +114,7 @@ export default function DashboardTopNav({ id }: DashboardTopNavProps) {
                     <SlashIcon />
                   </BreadcrumbSeparator>
                   <BreadcrumbItem>
-                    <BreadcrumbPage>{decodeURIComponent(dataset_name)}</BreadcrumbPage>
+                    <BreadcrumbPage>{decodeURIComponent(Array.isArray(dataset_name) ? dataset_name[0] : (dataset_name || ""))}</BreadcrumbPage>
                   </BreadcrumbItem>
                 </>
               )}
@@ -122,7 +123,7 @@ export default function DashboardTopNav({ id }: DashboardTopNavProps) {
         </div>
         <div className="flex items-center gap-3 ml-auto">
           <SearchBar />
-          {userId && <Profile />}
+          {userId && <Profile isExpanded={false} />}
         </div>
       </header>
     </div>

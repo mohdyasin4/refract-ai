@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  postgres-ecommerce:
+    image: postgres:17-alpine
+    container_name: refract-postgres-ecommerce
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - ecommerce-db-data:/var/lib/postgresql/data
+      # Mount schema initialization script which runs on first setup
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - refract-demo-network
+
+volumes:
+  ecommerce-db-data:
+    driver: local
+
+networks:
+  refract-demo-network:
+    driver: bridge

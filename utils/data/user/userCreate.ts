@@ -15,7 +15,7 @@ export const userCreate = async ({
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_SERVICE_ROLE_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
     {
       cookies: {
         get(name: string) {
@@ -26,11 +26,11 @@ export const userCreate = async ({
   );
 
   try {
-    // First, check if a user with this email already exists
+    // First, check if a user with this user_id already exists
     const { data: existingUser, error: checkError } = await supabase
       .from("users")
       .select("*")
-      .eq("email", email)
+      .eq("user_id", user_id)
       .single();
 
     if (checkError && checkError.code !== "PGRST116") {
@@ -38,17 +38,22 @@ export const userCreate = async ({
       throw checkError;
     }
 
+    const userAttributes = {
+      email,
+      first_name,
+      last_name,
+      profile_image_url,
+    };
+
     if (existingUser) {
       // If user exists, update their details
       const { data, error } = await supabase
         .from("users")
         .update({
-          first_name,
-          last_name,
-          profile_image_url,
-          user_id,
+          attributes: userAttributes,
+          updatedAt: new Date().toISOString(),
         })
-        .eq("email", email)
+        .eq("user_id", user_id)
         .select();
 
       if (error) throw error;
@@ -59,11 +64,10 @@ export const userCreate = async ({
         .from("users")
         .insert([
           {
-            email,
-            first_name,
-            last_name,
-            profile_image_url,
             user_id,
+            attributes: userAttributes,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
           },
         ])
         .select();

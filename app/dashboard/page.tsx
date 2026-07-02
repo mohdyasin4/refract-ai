@@ -160,24 +160,14 @@ export default function DatabasePage() {
   const [showAllConnections, setShowAllConnections] = useState(false);
   const INITIAL_CONNECTIONS_LIMIT = 8;
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
-  const supabaseKey = process.env
-    .NEXT_PUBLIC_SUPABASE_SUPABASE_SERVICE_ROLE_KEY as string;
-  // Create a Supabase client with the Clerk token
-  const supabaseClient = createClient(supabaseUrl!, supabaseKey!, {
-    global: {
-      fetch: async (url: string | URL | Request, options = {}) => {
-        const clerkToken = await session?.getToken({ template: "supabase" });
-        const headers = new Headers(options?.headers);
-        headers.set("Authorization", `Bearer ${clerkToken}`);
+  const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseUrl = (rawUrl && rawUrl !== "your_supabase_url_here") ? rawUrl : "https://placeholder-url.supabase.co";
 
-        return fetch(url, {
-          ...options,
-          headers,
-        });
-      },
-    },
-  });
+  const rawKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseKey = (rawKey && rawKey !== "your_supabase_service_role_key_here") ? rawKey : "placeholder-key-here";
+
+  // Create a Supabase client directly (bypassing Clerk JWT sync for local development)
+  const supabaseClient = createClient(supabaseUrl, supabaseKey);
   const [selectedOption, setSelectedOption] = useState<string | null>(null); // Tracks selected option
 
   const handleOptionSelect = (option: string) => {
@@ -202,7 +192,61 @@ export default function DatabasePage() {
   // Shuffle dataSamples when the component mounts
   useEffect(() => {
     setShuffledSamples(shuffleArray([...dataSamples]));
-  }, []);  // Fetch data function
+  }, []);
+
+  // Auto-sync Clerk user to Supabase public.users table (for local dev and new signins)
+  useEffect(() => {
+    const syncUser = async () => {
+      if (!user) return;
+      try {
+        const { data: existingUser, error } = await supabaseClient
+          .from("users")
+          .select("user_id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (error && error.code !== "PGRST116") {
+          console.error("Error checking user existence in Supabase:", error);
+          return;
+        }
+
+        if (!existingUser) {
+          console.log("Syncing Clerk user to Supabase public.users:", user.id);
+          const email = user.emailAddresses[0]?.emailAddress || "";
+          const firstName = user.firstName || "";
+          const lastName = user.lastName || "";
+          const profileImageUrl = user.imageUrl || "";
+
+          const { error: insertError } = await supabaseClient
+            .from("users")
+            .insert({
+              user_id: user.id,
+              attributes: {
+                email,
+                first_name: firstName,
+                last_name: lastName,
+                profile_image_url: profileImageUrl,
+              },
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            });
+
+          if (insertError) {
+            console.error("Failed to insert user row in Supabase:", insertError);
+          } else {
+            console.log("Successfully synced Clerk user to Supabase public.users!");
+            // Re-fetch connection list after user sync
+            const freshData = await getData();
+            setData(freshData);
+          }
+        }
+      } catch (err) {
+        console.error("Error in syncUser effect:", err);
+      }
+    };
+
+    syncUser();
+  }, [user]);  // Fetch data function
   async function getData(): Promise<any[]> {
     console.log("=== getData function called ===", new Date().toISOString());
     if (!user) {

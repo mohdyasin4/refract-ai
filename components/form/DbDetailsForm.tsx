@@ -13,6 +13,10 @@ const schema = z.object({
   databaseName: z.string().min(1, "Database Name is required"),
   databaseType: z.string().min(1, "Database Type is required"),
   host: z.string().min(1, "Host is required"),
+  port: z.preprocess(
+    (val) => (val === "" || val === undefined ? undefined : Number(val)),
+    z.number().int().positive().nullable().optional()
+  ),
   username: z.string().min(1, "Username is required"),
   password: z.string().min(1, "Password is required"),
 });
@@ -29,9 +33,26 @@ const DatabaseDetailsForm: React.FC<DatabaseDetailsFormProps> = ({ onSubmit }) =
     handleSubmit,
     formState: { errors, isSubmitting },
     setValue,
+    watch,
   } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
+
+  const selectedDbType = watch("databaseType");
+
+  React.useEffect(() => {
+    if (selectedDbType) {
+      const defaultPorts: Record<string, number> = {
+        postgres: 5432,
+        mysql: 3306,
+        mongodb: 27017,
+      };
+      const defaultPort = defaultPorts[selectedDbType];
+      if (defaultPort) {
+        setValue("port", defaultPort);
+      }
+    }
+  }, [selectedDbType, setValue]);
 
   const submitForm = (formData: FormData) => {
     try {
@@ -71,10 +92,17 @@ const DatabaseDetailsForm: React.FC<DatabaseDetailsFormProps> = ({ onSubmit }) =
         )}
       </div>
 
-      <div className="space-y-2">
-        <Label>Host</Label>
-        <Input {...register("host")} placeholder="Enter host" />
-        {errors?.host?.message && <p className="text-red-500 text-sm">{errors.host.message}</p>}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="col-span-2 space-y-2">
+          <Label>Host</Label>
+          <Input {...register("host")} placeholder="Enter host" />
+          {errors?.host?.message && <p className="text-red-500 text-sm">{errors.host.message}</p>}
+        </div>
+        <div className="space-y-2">
+          <Label>Port</Label>
+          <Input {...register("port")} type="number" placeholder="Port" />
+          {errors?.port?.message && <p className="text-red-500 text-sm">{errors.port.message}</p>}
+        </div>
       </div>
 
       <div className="space-y-2">

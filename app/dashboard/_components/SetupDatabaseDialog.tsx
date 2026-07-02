@@ -59,6 +59,7 @@ const SetupDatabaseDialog: React.FC<SetupDatabaseDialogProps> = ({
           database_name: formData.databaseName,
           database_type: formData.databaseType,
           host: formData.host,
+          port: formData.port || null,
           username: formData.username,
           password: formData.password,
           user_id: user.id, // Save the user's externalId

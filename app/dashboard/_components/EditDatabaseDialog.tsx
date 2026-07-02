@@ -18,6 +18,7 @@ interface EditDatabaseDialogProps {
     databaseName: string;
     databaseType: string;
     host: string;
+    port?: number | null;
     username: string;
     password: string;
   };
@@ -33,6 +34,7 @@ const EditDatabaseDialog: React.FC<EditDatabaseDialogProps> = ({
   const [databaseName, setDatabaseName] = useState(initialData.databaseName);
   const [databaseType, setDatabaseType] = useState(initialData.databaseType);
   const [host, setHost] = useState(initialData.host);
+  const [port, setPort] = useState<number | string>(initialData.port ?? "");
   const [username, setUsername] = useState(initialData.username);
   const [password, setPassword] = useState(initialData.password);
 
@@ -44,6 +46,7 @@ const EditDatabaseDialog: React.FC<EditDatabaseDialogProps> = ({
         database_name: databaseName,
         database_type: databaseType,
         host,
+        port: port === "" ? null : Number(port),
         username,
         password,
       })
@@ -61,6 +64,7 @@ const EditDatabaseDialog: React.FC<EditDatabaseDialogProps> = ({
     setDatabaseName(initialData.databaseName);
     setDatabaseType(initialData.databaseType);
     setHost(initialData.host);
+    setPort(initialData.port ?? "");
     setUsername(initialData.username);
     setPassword(initialData.password);
   }, [initialData]);
@@ -98,15 +102,31 @@ const EditDatabaseDialog: React.FC<EditDatabaseDialogProps> = ({
                 className="border p-2 w-full mt-2"
               />
             </label>
-            <label>
-              Host
-              <input
-                type="text"
-                value={host}
-                onChange={(e) => setHost(e.target.value)}
-                className="border p-2 w-full mt-2"
-              />
-            </label>
+            <div className="grid grid-cols-3 gap-4 mt-2">
+              <div className="col-span-2">
+                <label className="block text-sm font-medium">
+                  Host
+                  <input
+                    type="text"
+                    value={host}
+                    onChange={(e) => setHost(e.target.value)}
+                    className="border p-2 w-full mt-1"
+                  />
+                </label>
+              </div>
+              <div>
+                <label className="block text-sm font-medium">
+                  Port
+                  <input
+                    type="number"
+                    value={port}
+                    onChange={(e) => setPort(e.target.value)}
+                    className="border p-2 w-full mt-1"
+                    placeholder="Port"
+                  />
+                </label>
+              </div>
+            </div>
             <label>
               Username
               <input

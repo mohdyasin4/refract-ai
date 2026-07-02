@@ -6,6 +6,7 @@ import { MongoClient } from "mongodb";
 
 interface DatabaseConfig {
   host: string;
+  port?: number;
   database: string;
   user: string;
   password: string;
@@ -20,6 +21,7 @@ export async function connectToPostgres(
 ): Promise<PostgresClient> {
   const client = new PostgresClient({
     host: config.host,
+    port: config.port || 5432,
     database: config.database,
     user: config.user,
     password: config.password,
@@ -100,6 +102,7 @@ export async function connectToMySQL(
 ): Promise<mysql.Connection> {
   const connection = await mysql.createConnection({
     host: config.host,
+    port: config.port || 3306,
     database: config.database,
     user: config.user,
     password: config.password,
@@ -130,7 +133,7 @@ export async function queryMySQLTable(
   const [rows, fields] = await connection.execute(query);
   const columns = fields.map((field: any) => field.name);
   console.log("Query result:", { columns, rows });
-  return { columns, rows };
+  return { columns, rows: rows as any[] };
 }
 
 export async function executeMySQLQuery(
@@ -138,7 +141,7 @@ export async function executeMySQLQuery(
   query: string
 ): Promise<any[]> {
   const [rows] = await connection.execute(query);
-  return rows;
+  return rows as any[];
 }
 
 /**
@@ -181,8 +184,9 @@ export async function getMySQLColumnTypes(
 export async function connectToMongoDB(
   config: DatabaseConfig
 ): Promise<{ db: any; client: MongoClient }> {
+  const port = config.port || 27017;
   const client = new MongoClient(
-    `mongodb://${config.user}:${config.password}@${config.host}/${config.database}`
+    `mongodb://${config.user}:${config.password}@${config.host}:${port}/${config.database}`
   );
   await client.connect();
   const db = client.db(config.database);

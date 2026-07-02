@@ -67,6 +67,7 @@ model database_connections {
   database_name   String
   database_type   String
   host            String
+  port            Int?
   username        String
   password        String
   user_id         String

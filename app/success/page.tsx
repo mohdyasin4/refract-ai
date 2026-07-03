@@ -7,12 +7,19 @@ import Stripe from 'stripe';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export default async function SuccessPage({ searchParams }: {
-  searchParams: { [key: string]: string | string[] | undefined }
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
+  const resolvedSearchParams = await searchParams;
+  const sessionId = resolvedSearchParams?.session_id;
 
-  const session = await stripe.checkout.sessions.retrieve(searchParams?.session_id as string);
-
-  const jsonString = JSON.stringify(session, null, 2);
+  let session = null;
+  if (typeof sessionId === 'string') {
+    try {
+      session = await stripe.checkout.sessions.retrieve(sessionId);
+    } catch (error) {
+      console.error("Error retrieving Stripe session:", error);
+    }
+  }
 
   return (
     <main className="flex min-w-screen flex-col items-center justify-between">

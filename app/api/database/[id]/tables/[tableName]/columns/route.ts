@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { connectToPostgres, listPostgresColumns, connectToMySQL, listMySQLColumns, connectToMongoDB, listMongoDBColumns } from '@/utils/databaseUtils';
 
-export async function GET(req: NextRequest, { params }: { params: { id: string; tableName: string } }) {
-  const { id, tableName } = params;
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string; tableName: string }> }) {
+  const { id, tableName } = await params;
 
   if (!id || !tableName) {
     return NextResponse.json({ error: 'Invalid ID or tableName' }, { status: 400 });

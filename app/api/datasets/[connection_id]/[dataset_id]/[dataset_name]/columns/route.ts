@@ -3,10 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { connectToPostgres, listPostgresColumns, connectToMySQL, listMySQLColumns, connectToMongoDB, listMongoDBColumns } from '@/utils/databaseUtils';
 
-export async function GET(req: NextRequest, { params }: { params: { id: string; datasetName: string } }) {
-  const { id, datasetName } = params;
+export async function GET(req: NextRequest, { params }: { params: Promise<{ connection_id: string; dataset_id: string; dataset_name: string }> }) {
+  const { connection_id, dataset_name } = await params;
 
-  if (!id || !datasetName) {
+  if (!connection_id || !dataset_name) {
     return NextResponse.json({ error: 'Invalid ID or datasetName' }, { status: 400 });
   }
 
@@ -14,8 +14,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string; 
   const { data: dataset, error: datasetError } = await supabaseClient
     .from('datasets')
     .select('id, name, connection_id, sql_query')
-    .eq('connection_id', id)
-    .eq('name', datasetName)
+    .eq('connection_id', connection_id)
+    .eq('name', dataset_name)
     .single();
 
   if (datasetError || !dataset) {
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string; 
   const { data: dbConnection, error: dbConnectionError } = await supabaseClient
     .from('database_connections')
     .select('database_type, host, port, database_name, username, password')
-    .eq('id', id)
+    .eq('id', connection_id)
     .single();
 
   if (dbConnectionError || !dbConnection) {

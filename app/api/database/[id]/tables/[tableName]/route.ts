@@ -34,9 +34,9 @@ import { manipulateRawQueryWithGroupBy, buildQuery } from "@/utils/queryUtils";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string; tableName: string } }
+  { params }: { params: Promise<{ id: string; tableName: string }> }
 ) {
-  const { id, tableName } = params;
+  const { id, tableName } = await params;
 
   if (!id || !tableName) {
     return NextResponse.json(

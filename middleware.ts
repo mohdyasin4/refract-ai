@@ -16,11 +16,12 @@ const isProtectedRoute = config.auth.enabled
   ? createRouteMatcher(["/dashboard(.*)"])
   : () => false;
 
-export default function middleware(req: any) {
+export default async function middleware(req: any) {
   if (config.auth.enabled) {
-    return clerkMiddleware((auth, req) => {
-      if (!auth().userId && isProtectedRoute(req)) {
-        return auth().redirectToSignIn();
+    return await clerkMiddleware(async (auth, req) => {
+      const authObj = await auth();
+      if (!authObj.userId && isProtectedRoute(req)) {
+        return authObj.redirectToSignIn();
       } else {
         return NextResponse.next();
       }

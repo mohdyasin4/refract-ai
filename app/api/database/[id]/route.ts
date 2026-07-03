@@ -4,8 +4,8 @@ import { supabaseClient } from '@/lib/supabaseClient';
 import { getDbConnectionDetails, setDbConnectionDetails } from '@/lib/dbCache';
 import { connectToPostgres, listPostgresTables, connectToMySQL, listMySQLTables, connectToMongoDB, listMongoDBCollections } from '@/utils/databaseUtils';
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
 
   if (!id) {
     return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });

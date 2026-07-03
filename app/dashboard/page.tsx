@@ -436,12 +436,9 @@ export default function DatabasePage() {
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="relative w-full"
           >
-            {/* Clean background with subtle accent */}            <div
-              className="relative rounded-xl p-4 md:p-5 
-                          bg-white/95 dark:bg-card/95 
-                          border border-gray-200/60 dark:border-border/60
-                          shadow-lg shadow-black/5 dark:shadow-black/20
-                          backdrop-blur-md"
+            {/* Clean background with subtle accent */}
+            <div
+              className="relative rounded-xl p-4 md:p-5 bg-white/95 dark:bg-card/95 border border-gray-200/60 dark:border-border/60 shadow-lg shadow-black/5 dark:shadow-black/20 backdrop-blur-md"
             >
               {/* Minimal accent border */}
               <div className="absolute inset-0 rounded-xl border border-[#ffbe19]/20 dark:border-[#ffbe19]/10" />
@@ -615,38 +612,21 @@ export default function DatabasePage() {
 
                               {/* Animated shine effect */}
                               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
-                                <div
-                                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent 
-                                                -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] 
-                                                transition-transform duration-1000 ease-out"
-                                />
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-out" />
                               </div>
 
                               {/* Pulsing background on hover */}
-                              <div
-                                className="absolute inset-0 bg-gradient-to-br from-[#ffc73d]/20 to-[#ffbe19]/20 
-                                              opacity-0 group-hover:opacity-100 transition-opacity duration-500 
-                                              animate-pulse group-hover:animate-none rounded-2xl"
-                              />                              {/* Button content */}
+                              <div className="absolute inset-0 bg-gradient-to-br from-[#ffc73d]/20 to-[#ffbe19]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-pulse group-hover:animate-none rounded-2xl" />
+                              {/* Button content */}
                               <div className="relative flex flex-col items-center justify-center h-full space-y-3 text-black/90">
                                 {/* Icon with enhanced background */}
                                 <div className="relative">
                                   {/* Icon glow effect */}
-                                  <div
-                                    className="absolute inset-0 w-12 h-12 bg-white/20 rounded-full blur-sm 
-                                                  group-hover:bg-white/30 transition-all duration-300 group-hover:scale-125"
-                                  />
-                                  <div
-                                    className="relative w-12 h-12 bg-white/15 backdrop-blur-sm rounded-full 
-                                                  flex items-center justify-center border border-white/20
-                                                  group-hover:bg-white/25 group-hover:border-white/40 
-                                                  transition-all duration-500 group-hover:scale-110 group-hover:rotate-90
-                                                  shadow-lg shadow-black/10"
-                                  >
+                                  <div className="absolute inset-0 w-12 h-12 bg-white/20 rounded-full blur-sm group-hover:bg-white/30 transition-all duration-300 group-hover:scale-125" />
+                                  <div className="relative w-12 h-12 bg-white/15 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 group-hover:bg-white/25 group-hover:border-white/40 transition-all duration-500 group-hover:scale-110 group-hover:rotate-90 shadow-lg shadow-black/10">
                                     <Plus
                                       size={24}
-                                      className="text-black/80 font-bold transition-all duration-500 
-                                                 group-hover:text-black/90 drop-shadow-sm"
+                                      className="text-black/80 font-bold transition-all duration-500 group-hover:text-black/90 drop-shadow-sm"
                                     />
                                   </div>
                                 </div>
@@ -656,27 +636,20 @@ export default function DatabasePage() {
                                   <div className="text-lg font-bold tracking-wide text-black/90 group-hover:text-black transition-colors duration-300">
                                     Add Data Source
                                   </div>
-                                  <div
-                                    className="text-sm font-medium text-black/75 
-                                                  group-hover:text-black/85 transition-colors duration-300"
-                                  >
+                                  <div className="text-sm font-medium text-black/75 group-hover:text-black/85 transition-colors duration-300">
                                     Get started instantly
                                   </div>
                                 </div>
                                 
                                 {/* Enhanced arrow indicator */}
                                 <div className="flex items-center justify-center opacity-80 group-hover:opacity-100 transition-all duration-300">
-                                  <div
-                                    className="flex items-center space-x-1 px-2.5 py-0.5 rounded-full 
-                                                  bg-black/10 group-hover:bg-black/15 transition-all duration-300"
-                                  >
+                                  <div className="flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-black/10 group-hover:bg-black/15 transition-all duration-300">
                                     <span className="text-xs font-medium text-black/80 group-hover:text-black/90">
                                       Start
                                     </span>
                                     <ArrowRight
                                       size={14}
-                                      className="text-black/80 group-hover:text-black/90 
-                                                 group-hover:translate-x-1 transition-all duration-300"
+                                      className="text-black/80 group-hover:text-black/90 group-hover:translate-x-1 transition-all duration-300"
                                     />
                                   </div>
                                 </div>

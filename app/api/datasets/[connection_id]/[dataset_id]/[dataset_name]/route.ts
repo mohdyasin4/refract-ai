@@ -12,9 +12,9 @@ import { manipulateRawQueryWithGroupBy } from '@/utils/queryUtils';
 
 export async function GET(
   req: NextRequest, 
-  { params }: { params: { connection_id: string; dataset_id: string; dataset_name: string } }
+  { params }: { params: Promise<{ connection_id: string; dataset_id: string; dataset_name: string }> }
 ) {
-  const { connection_id, dataset_id, dataset_name } = params;
+  const { connection_id, dataset_id, dataset_name } = await params;
   console.log('Connection ID:', connection_id, 'Dataset Name:', dataset_name);
 
   if (!connection_id || !dataset_id) {
